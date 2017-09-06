@@ -1,14 +1,14 @@
-#! /bin/bash
+#!/bin/bash
 
 # Configurations
-DOWNLOAD_FOLDER=/home/mathieu/Téléchargements
+DOWNLOAD_FOLDER=~/Téléchargements
+
 
 ## Packages Versions
 JDK_VERSION=8
-INTELLIJ_VERSION=2016.3.4
+JETBRAINS_TOOLBOX_VERSION=1.4.2492
+SLACK_VERSION=2.7.1
 MYSQWORKBENCH_VERSION=6.3.9-1ubuntu16.04
-SLACK_VERSION=2.5.1
-NETBEANS_VERSION=8.2
 PHP_VERSION=7.0
 
 ## Custom Install
@@ -24,7 +24,7 @@ GPG_URL=(
 )
 
 GPG_UBUNTU_KEYSERVER=(
-    'B05498B7' # Steam
+    'B05498B7'
     'BA9EF27F'
     '3F055C03' # Grub Customizer
 )
@@ -51,9 +51,7 @@ UTILS_APT_PACKAGES=(
 WGET_PACKAGES=(
     'https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb'
     "https://downloads.slack-edge.com/linux_releases/slack-desktop-$SLACK_VERSION-amd64.deb"
-    "https://download.jetbrains.com/idea/ideaIU-$INTELLIJ_VERSION.tar.gz"
-    "http://download.netbeans.org/netbeans/$NETBEANS_VERSION/final/bundles/netbeans-$NETBEANS_VERSION-linux.sh"
-    #'https://global.download.synology.com/download/Tools/CloudStationDrive/4.2.3-4385/Ubuntu/Installer/x86_64/synology-cloud-station-drive-4385.x86_64.deb'
+    "https://download.jetbrains.com/toolbox/jetbrains-toolbox-$JETBRAINS_TOOLBOX_VERSION.tar.gz"
 )
 
 DEV_APT_PACKAGES=(
@@ -61,8 +59,8 @@ DEV_APT_PACKAGES=(
     'vim'
     'emacs24'
     'g++'
-    "gcc-6"
-    "g++-6"
+    'gcc-6'
+    'g++-6'
     'git'
     'docker-ce'
     'jq'
@@ -128,11 +126,11 @@ _install_utils() {
     for wget_url in "${WGET_PACKAGES[@]}";
     do
         echo "[+] Wget File Url : $wget_url"
-        #wget -qP $DOWNLOAD_FOLDER $wget_url
+        wget -qP $DOWNLOAD_FOLDER $wget_url
     done
 
     echo -e "\n[~] Install DEB Download Files"
-    #dpkg -i $DOWNLOAD_FOLDER/*.deb
+    dpkg -i $DOWNLOAD_FOLDER/*.deb
 }
 
 _pre_dev_packages_install() {
@@ -167,15 +165,15 @@ _custom_web_configuration() {
     sed -i 's/display_errors = Off/display_errors = On/g' /etc/php/7.0/apache2/php.ini
 
     echo -e "[~] Disable Apache2 & MySQL AutoStart\n"
-    update-rc.d apache2 disable 2> /dev/null
-    update-rc.d mysql disable 2> /dev/null
+    update-rc.d apache2 disable > /dev/null
+    update-rc.d mysql disable > /dev/null
 
     echo -e "[~] Install NodeJS Latest Version\n"
-    curl -fsSL $NODE_INSTALL_URL | N_PREFIX=/opt/n bash -s -- -y
+    curl -L $NODE_INSTALL_URL | N_PREFIX=/opt/n bash -s -- -y > /dev/null
     ln -s /opt/n/bin/node /usr/bin/node
     ln -s /opt/n/bin/npm /usr/bin/npm
 
-    npm install -g typescript
+    npm install -g @angular/cli
 }
 
 _custom_java_configuration() {
@@ -187,16 +185,17 @@ _custom_java_configuration() {
     wget -q -O $DOWNLOAD_FOLDER/gradle.zip $GRADLE_DL_URL
     
     echo -e "[~] Install Gradle in /opt/gradle\n"
-    unzip -qq $DOWNLOAD_FOLDER/gradle.zip -d /opt
+    unzip $DOWNLOAD_FOLDER/gradle.zip -d /opt
     mv /opt/gradle* /opt/gradle
     
     # Path Variable
     echo "export GRADLE_HOME=\"/opt/gradle\"" >> ~/.bashrc
-    echo "export PATH=$GRADLE_HOME/bin:$PATH" >> ~/.bashrc
+    echo 'export PATH=$GRADLE_HOME/bin:$PATH' >> ~/.bashrc
 
-
-    echo -e "[~] Install Intellij in /opt/ideaIU-$INTELLIJ_VERSION\n"
-    #tar xzvf $DOWNLOAD_FOLDER/ideaIU-$INTELLIJ_VERSION.tar.gz -C /opt
+    # Intellij
+    echo -e "[~] Install Jetbrains ToolBox in /opt/jetbrains-toolbox\n"
+    tar xzvf $DOWNLOAD_FOLDER/jetbrains-toolbox-$JETBRAINS_TOOLBOX_VERSION.tar.gz -C /opt
+    mv /opt/jetbrains-toolbox* /opt/jetbrains-toolbox
 }
 
 _install_package() {
