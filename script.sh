@@ -26,13 +26,13 @@ GPG_URL=(
 GPG_UBUNTU_KEYSERVER=(
     'B05498B7'
     'BA9EF27F'
-    '3F055C03' # Grub Customizer
 )
 
 REPOSITORIES=(
     'deb [arch=amd64] https://download.docker.com/linux/ubuntu xenial stable'
     'deb http://repo.steampowered.com/steam/ precise steam'
     'deb [arch=amd64] https://repo.skype.com/deb stable main'
+    'ppa:danielrichter2007/grub-customizer'
 )
 
 UTILS_APT_PACKAGES=(
@@ -44,6 +44,7 @@ UTILS_APT_PACKAGES=(
     'inkscape'
     'grub-customizer'
     'gir1.2-gtop-2.0'
+    'libcurl3'
     'steam-launcher'
     'skypeforlinux'
 )
@@ -60,7 +61,6 @@ DEV_APT_PACKAGES=(
     'emacs24'
     'g++'
     'gcc-6'
-    'g++-6'
     'git'
     'docker-ce'
     'jq'
@@ -103,7 +103,11 @@ _install_repositories() {
     for repository in "${REPOSITORIES[@]}";
     do
         echo "[+] Adding Deb Repository : $repository"
-        echo $repository >> /etc/apt/sources.list
+        if [[ $repository == ppa* ]]; then
+            add-apt-repository -y $repository > /dev/null
+        else
+            echo $repository >> /etc/apt/sources.list
+        fi
     done
 
     echo "[+] Update dependencies"
@@ -130,6 +134,7 @@ _install_utils() {
     done
 
     echo -e "\n[~] Install DEB Download Files"
+    chmod 755 $DOWNLOAD_FOLDER/*.deb
     dpkg -i $DOWNLOAD_FOLDER/*.deb
 }
 
@@ -170,9 +175,11 @@ _custom_web_configuration() {
 
     echo -e "[~] Install NodeJS Latest Version\n"
     curl -L $NODE_INSTALL_URL | N_PREFIX=/opt/n bash -s -- -y > /dev/null
+    chmod 777 -R /opt/n
     ln -s /opt/n/bin/node /usr/bin/node
     ln -s /opt/n/bin/npm /usr/bin/npm
 
+    echo -e "[~] Install Npm Global Dependencies\n"
     npm install -g @angular/cli
 }
 
@@ -193,9 +200,10 @@ _custom_java_configuration() {
     echo 'export PATH=$GRADLE_HOME/bin:$PATH' >> ~/.bashrc
 
     # Intellij
-    echo -e "[~] Install Jetbrains ToolBox in /opt/jetbrains-toolbox\n"
+    echo -e "[~] Install Jetbrains Toolbox in /opt/jetbrains-toolbox\n"
     tar xzvf $DOWNLOAD_FOLDER/jetbrains-toolbox-$JETBRAINS_TOOLBOX_VERSION.tar.gz -C /opt
     mv /opt/jetbrains-toolbox* /opt/jetbrains-toolbox
+    chmod 755 -R /opt/jetbrains-toolbox
 }
 
 _install_package() {
